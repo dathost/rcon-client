@@ -57,11 +57,11 @@ export class Rcon {
       buffer.writeInt32LE(len + 10, 0);
       buffer.writeInt32LE(this.id, 4);
       buffer.writeInt32LE(requestId, 8);
-      buffer.write(data, 12, "ascii");
+      buffer.write(data, 12, "utf8");
       buffer.writeInt16LE(0, 12 + len);
       this.socket.write(buffer);
       this.socket.once("data", (data: Buffer) => {
-        resolve(data.toString("ascii", 12));
+        resolve(data.toString("utf8", 12));
       });
     });
   }
@@ -78,4 +78,3 @@ export class Rcon {
     this.socket.end();
   }
 }
-
