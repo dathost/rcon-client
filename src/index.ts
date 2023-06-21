@@ -31,7 +31,7 @@ export class Rcon {
   connect() {
     return new Promise<null | Error>((resolve, reject) => {
       this.socket = net.createConnection(this.options.port, this.options.host);
-      this.socket.once("error", () => reject(new Error("Connection error")));
+      this.socket.once("error", (e) => reject(e));
       this.socket.once("connect", () => {
         this.connected = true;
         this.id = crypto.randomInt(2147483647);
