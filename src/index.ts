@@ -9,6 +9,7 @@ type Options = {
   host: string;
   port: number;
   password: string;
+  timeout?: number;
 };
 enum RequestId {
   CMD_RESPONSE = 0,
@@ -30,7 +31,11 @@ export class Rcon {
   }
   connect() {
     return new Promise<null | Error>((resolve, reject) => {
-      this.socket = net.createConnection(this.options.port, this.options.host);
+      this.socket = net.createConnection({
+        host: this.options.host,
+        port: this.options.port,
+        timeout: this.options.timeout
+      })
       this.socket.once("error", (e) => reject(e));
       this.socket.once("connect", () => {
         this.connected = true;
