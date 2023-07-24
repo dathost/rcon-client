@@ -18,7 +18,7 @@ enum RequestId {
 }
 export class Rcon {
   options: Options;
-  socket: net.Socket;
+  socket?: net.Socket;
   connected: boolean;
   authed: boolean;
   id: number;
@@ -26,7 +26,6 @@ export class Rcon {
     this.options = options;
     this.connected = false;
     this.authed = false;
-    this.socket = new net.Socket();
     this.id = 0;
   }
   connect() {
@@ -41,7 +40,7 @@ export class Rcon {
         this.connected = true;
         this.id = crypto.randomInt(2147483647);
         this.sendRaw(this.options.password, RequestId.LOGIN);
-        this.socket.once("data", (data) => {
+        this.socket?.once("data", (data) => {
           let response: number = data.readInt32LE(4);
           if (response == this.id) {
             this.authed = true;
@@ -52,11 +51,18 @@ export class Rcon {
           }
         });
       });
+      this.socket.once("timeout", () => {
+        this.socket?.destroy();
+        reject(new Error("Socket timeout"));
+      })
     });
   }
   sendRaw(data: string, requestId: RequestId) {
     return new Promise<string>((resolve, reject) => {
-      if (!this.connected) reject(new Error("Authentication error"));
+      if (!this.socket || !this.connected) {
+        reject(new Error("Authentication error"))
+        return;
+      };
       let len = Buffer.byteLength(data);
       let buffer = Buffer.alloc(len + 14);
       buffer.writeInt32LE(len + 10, 0);
@@ -80,6 +86,6 @@ export class Rcon {
   disconnect() {
     this.connected = false;
     this.authed = false;
-    this.socket.end();
+    this.socket?.end();
   }
 }
