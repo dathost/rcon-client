@@ -2,9 +2,9 @@
 author: majorek31
 credits: https://wiki.vg/RCON
 */
-import * as net from "net";
-import { Buffer } from "buffer";
-import * as crypto from "crypto";
+import { createConnection, Socket } from "node:net";
+import { Buffer } from "node:buffer";
+import { randomInt } from "node:crypto";
 import { setTimeout, clearTimeout } from "node:timers";
 type Options = {
   host: string;
@@ -19,7 +19,7 @@ enum RequestId {
 }
 export class Rcon {
   options: Options;
-  socket?: net.Socket;
+  socket?: Socket;
   connected: boolean;
   authed: boolean;
   id: number;
@@ -31,7 +31,7 @@ export class Rcon {
   }
   connect() {
     return new Promise<null | Error>((resolve, reject) => {
-      this.socket = net.createConnection({
+      this.socket = createConnection({
         host: this.options.host,
         port: this.options.port,
       });
@@ -48,7 +48,7 @@ export class Rcon {
       this.socket.once("connect", () => {
         clearTimeout(timeoutHandle);
         this.connected = true;
-        this.id = crypto.randomInt(2147483647);
+        this.id = randomInt(2147483647);
         this.sendRaw(this.options.password, RequestId.LOGIN);
         this.socket?.once("data", (data) => {
           let response: number = data.readInt32LE(4);
