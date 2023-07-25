@@ -33,8 +33,8 @@ export class Rcon {
       this.socket = net.createConnection({
         host: this.options.host,
         port: this.options.port,
-        timeout: this.options.timeout
-      })
+        timeout: this.options.timeout,
+      });
       this.socket.once("error", (e) => reject(e));
       this.socket.once("connect", () => {
         this.connected = true;
@@ -54,15 +54,15 @@ export class Rcon {
       this.socket.once("timeout", () => {
         this.socket?.destroy();
         reject(new Error("Socket timeout"));
-      })
+      });
     });
   }
   sendRaw(data: string, requestId: RequestId) {
     return new Promise<string>((resolve, reject) => {
       if (!this.socket || !this.connected) {
-        reject(new Error("Authentication error"))
+        reject(new Error("Authentication error"));
         return;
-      };
+      }
       let len = Buffer.byteLength(data);
       let buffer = Buffer.alloc(len + 14);
       buffer.writeInt32LE(len + 10, 0);

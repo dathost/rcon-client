@@ -1,9 +1,9 @@
 {
-    "compilerOptions": {
-        "target": "ES5",
-        "declaration": true,
-        "outDir": "lib",
-        "strict": true
-    },
-    "include": ["src"]
+  "compilerOptions": {
+    "target": "ES5",
+    "declaration": true,
+    "outDir": "lib",
+    "strict": true
+  },
+  "include": ["src"]
 }
