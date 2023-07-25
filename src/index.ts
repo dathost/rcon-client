@@ -5,6 +5,7 @@ credits: https://wiki.vg/RCON
 import * as net from "net";
 import { Buffer } from "buffer";
 import * as crypto from "crypto";
+import { setTimeout, clearTimeout } from "node:timers";
 type Options = {
   host: string;
   port: number;
@@ -33,10 +34,19 @@ export class Rcon {
       this.socket = net.createConnection({
         host: this.options.host,
         port: this.options.port,
-        timeout: this.options.timeout,
       });
+
+      let timeoutHandle: NodeJS.Timeout;
+      if (this.options.timeout) {
+        timeoutHandle = setTimeout(() => {
+          this.socket?.destroy();
+          reject(new Error("Socket timeout"));
+        }, this.options.timeout);
+      }
+
       this.socket.once("error", (e) => reject(e));
       this.socket.once("connect", () => {
+        clearTimeout(timeoutHandle);
         this.connected = true;
         this.id = crypto.randomInt(2147483647);
         this.sendRaw(this.options.password, RequestId.LOGIN);
@@ -51,10 +61,6 @@ export class Rcon {
           }
         });
       });
-      this.socket.once("timeout", () => {
-        this.socket?.destroy();
-        reject(new Error("Socket timeout"));
-      });
     });
   }
   sendRaw(data: string, requestId: RequestId) {
@@ -63,6 +69,15 @@ export class Rcon {
         reject(new Error("Authentication error"));
         return;
       }
+
+      let timeoutHandle: NodeJS.Timeout;
+      if (this.options.timeout) {
+        timeoutHandle = setTimeout(() => {
+          this.socket?.destroy();
+          reject(new Error("Socket timeout"));
+        }, this.options.timeout);
+      }
+
       let len = Buffer.byteLength(data);
       let buffer = Buffer.alloc(len + 14);
       buffer.writeInt32LE(len + 10, 0);
@@ -72,16 +87,13 @@ export class Rcon {
       buffer.writeInt16LE(0, 12 + len);
       this.socket.write(buffer);
       this.socket.once("data", (data: Buffer) => {
+        clearTimeout(timeoutHandle);
         resolve(data.toString("utf8", 12));
       });
     });
   }
   send(cmd: string) {
-    return new Promise<string>((resolve, reject) => {
-      if (!this.authed || !this.connected)
-        reject(new Error("Authentication error"));
-      this.sendRaw(cmd, 2).then((p) => resolve(p));
-    });
+    return this.sendRaw(cmd, 2);
   }
   disconnect() {
     this.connected = false;
