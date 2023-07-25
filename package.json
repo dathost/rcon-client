@@ -1,6 +1,6 @@
 {
   "name": "dathost-rcon-client",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "RCON client",
   "repository": {
     "type": "git",
