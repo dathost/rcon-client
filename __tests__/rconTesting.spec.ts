@@ -1,12 +1,17 @@
 import { Rcon } from "../lib";
-test("Test connection", async () => {
-  let client: Rcon = new Rcon({
-    host: "localhost",
-    port: 25575,
-    password: "testing",
+
+const getRconClient = () => {
+  return new Rcon({
+    host: process.env.RCON_HOST || "localhost",
+    port: process.env.RCON_PORT ? parseInt(process.env.RCON_PORT) : 25575,
+    password: process.env.RCON_PASSWORD || "testing",
   });
+};
+
+test("Test connection", async () => {
+  const client = getRconClient();
   try {
-    let res = await client.connect();
+    await client.connect();
     client.disconnect();
   } catch (err) {
     expect(err).toBe(null);
@@ -18,14 +23,10 @@ test("Test connection", async () => {
 });
 
 test("Test data fetching", async () => {
-  let client: Rcon = new Rcon({
-    host: "localhost",
-    port: 25575,
-    password: "testing",
-  });
+  const client = getRconClient();
   try {
     await client.connect();
-    let res = await client.send("this command doesn t exist");
+    const res = await client.send("this command doesn t exist");
     expect(res).toBe('Unknown command. Type "/help" for help.');
     client.disconnect();
   } catch (err) {
