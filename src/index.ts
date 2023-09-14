@@ -54,7 +54,7 @@ export class Rcon {
         this.id = randomInt(2147483647);
         this.sendRaw(this.options.password, PacketType.SERVERDATA_AUTH);
         this.socket?.once("data", (data) => {
-          let response: number = data.readInt32LE(4);
+          const response: number = data.readInt32LE(4);
           if (response == this.id) {
             this.authed = true;
             resolve(null);
@@ -81,8 +81,8 @@ export class Rcon {
         }, this.options.timeout);
       }
 
-      let len = Buffer.byteLength(data);
-      let buffer = Buffer.alloc(len + 14);
+      const len = Buffer.byteLength(data);
+      const buffer = Buffer.alloc(len + 14);
       buffer.writeInt32LE(len + 10, 0);
       buffer.writeInt32LE(this.id, 4);
       buffer.writeInt32LE(packetType, 8);
