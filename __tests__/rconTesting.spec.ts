@@ -1,10 +1,10 @@
 import { Rcon } from "../lib";
 
-const getRconClient = () => {
+const getRconClient = (password?: string) => {
   return new Rcon({
     host: process.env.RCON_HOST || "localhost",
     port: process.env.RCON_PORT ? parseInt(process.env.RCON_PORT) : 25575,
-    password: process.env.RCON_PASSWORD || "testing",
+    password: password || process.env.RCON_PASSWORD || "testing",
   });
 };
 
@@ -36,4 +36,9 @@ test("Test big response", async () => {
   const res = await client.send("cvarlist");
   expect(res.endsWith("total convars/concommands\n")).toBeTruthy();
   client.disconnect();
+});
+
+test("Test auth fail", async () => {
+  const client = getRconClient("benan");
+  expect(client.connect()).rejects.toThrow("Authentication error");
 });
