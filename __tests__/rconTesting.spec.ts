@@ -29,3 +29,11 @@ test("Test data fetching", async () => {
   expect(res.startsWith("Unknown command")).toBeTruthy();
   client.disconnect();
 });
+
+test("Test big response", async () => {
+  const client = getRconClient();
+  await client.connect();
+  const res = await client.send("cvarlist");
+  expect(res.endsWith("total convars/concommands\n")).toBeTruthy();
+  client.disconnect();
+});

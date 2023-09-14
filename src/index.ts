@@ -89,10 +89,18 @@ export class Rcon {
       buffer.write(data, 12, "utf8");
       buffer.writeInt16LE(0, 12 + len);
       this.socket.write(buffer);
-      this.socket.once("data", (data: Buffer) => {
-        clearTimeout(timeoutHandle);
-        resolve(data.toString("utf8", 12));
-      });
+
+      const chunks: string[] = [];
+      const handleData = (data: Buffer) => {
+        const body = data.toString("utf8", 12);
+        chunks.push(body);
+        if (body.endsWith("\u0000\u0000")) {
+          this.socket?.off("data", handleData);
+          clearTimeout(timeoutHandle);
+          resolve(chunks.join("").slice(0, -2));
+        }
+      };
+      this.socket.on("data", handleData);
     });
   }
   send(cmd: string) {
