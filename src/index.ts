@@ -25,12 +25,10 @@ export class Rcon {
   socket?: Socket;
   connected: boolean;
   authed: boolean;
-  id: number;
   constructor(options: Options) {
     this.options = options;
     this.connected = false;
     this.authed = false;
-    this.id = 0;
   }
   connect() {
     return new Promise<null | Error>((resolve, reject) => {
@@ -51,16 +49,15 @@ export class Rcon {
       this.socket.once("connect", () => {
         clearTimeout(timeoutHandle);
         this.connected = true;
-        this.id = randomInt(2147483647);
         this.sendRaw(this.options.password, PacketType.SERVERDATA_AUTH);
         this.socket?.once("data", (data) => {
-          const response: number = data.readInt32LE(4);
-          if (response == this.id) {
-            this.authed = true;
-            resolve(null);
-          } else {
+          const responseId = data.readInt32LE(4);
+          if (responseId === -1) {
             this.disconnect();
             reject(new Error("Authentication error"));
+          } else {
+            this.authed = true;
+            resolve(null);
           }
         });
       });
@@ -81,10 +78,11 @@ export class Rcon {
         }, this.options.timeout);
       }
 
+      const requestId = randomInt(2147483647);
       const len = Buffer.byteLength(data);
       const buffer = Buffer.alloc(len + 14);
       buffer.writeInt32LE(len + 10, 0);
-      buffer.writeInt32LE(this.id, 4);
+      buffer.writeInt32LE(requestId, 4);
       buffer.writeInt32LE(packetType, 8);
       buffer.write(data, 12, "utf8");
       buffer.writeInt16LE(0, 12 + len);
