@@ -6,17 +6,20 @@ import { createConnection, Socket } from "node:net";
 import { Buffer } from "node:buffer";
 import { randomInt } from "node:crypto";
 import { setTimeout, clearTimeout } from "node:timers";
+
 type Options = {
   host: string;
   port: number;
   password: string;
   timeout?: number;
 };
-enum RequestId {
-  CMD_RESPONSE = 0,
-  CMD_REQUEST = 2,
-  LOGIN = 3,
+
+enum PacketType {
+  SERVERDATA_RESPONSE_VALUE = 0,
+  SERVERDATA_EXECCOMMAND = 2,
+  SERVERDATA_AUTH = 3,
 }
+
 export class Rcon {
   options: Options;
   socket?: Socket;
@@ -49,7 +52,7 @@ export class Rcon {
         clearTimeout(timeoutHandle);
         this.connected = true;
         this.id = randomInt(2147483647);
-        this.sendRaw(this.options.password, RequestId.LOGIN);
+        this.sendRaw(this.options.password, PacketType.SERVERDATA_AUTH);
         this.socket?.once("data", (data) => {
           let response: number = data.readInt32LE(4);
           if (response == this.id) {
@@ -63,7 +66,7 @@ export class Rcon {
       });
     });
   }
-  sendRaw(data: string, requestId: RequestId) {
+  sendRaw(data: string, packetType: PacketType) {
     return new Promise<string>((resolve, reject) => {
       if (!this.socket || !this.connected) {
         reject(new Error("Authentication error"));
@@ -82,7 +85,7 @@ export class Rcon {
       let buffer = Buffer.alloc(len + 14);
       buffer.writeInt32LE(len + 10, 0);
       buffer.writeInt32LE(this.id, 4);
-      buffer.writeInt32LE(requestId, 8);
+      buffer.writeInt32LE(packetType, 8);
       buffer.write(data, 12, "utf8");
       buffer.writeInt16LE(0, 12 + len);
       this.socket.write(buffer);
@@ -93,7 +96,7 @@ export class Rcon {
     });
   }
   send(cmd: string) {
-    return this.sendRaw(cmd, 2);
+    return this.sendRaw(cmd, PacketType.SERVERDATA_EXECCOMMAND);
   }
   disconnect() {
     this.connected = false;
