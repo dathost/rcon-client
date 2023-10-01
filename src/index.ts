@@ -7,7 +7,8 @@ import { Buffer } from "node:buffer";
 import { randomInt } from "node:crypto";
 import { setTimeout, clearTimeout } from "node:timers";
 
-type Options = {
+export type RconOptions = {
+  connectTimeout?: number;
   host: string;
   port: number;
   password: string;
@@ -21,11 +22,11 @@ enum PacketType {
 }
 
 export class Rcon {
-  options: Options;
+  options: RconOptions;
   socket?: Socket;
   connected: boolean;
   authed: boolean;
-  constructor(options: Options) {
+  constructor(options: RconOptions) {
     this.options = options;
     this.connected = false;
     this.authed = false;
@@ -38,18 +39,26 @@ export class Rcon {
       });
 
       let timeoutHandle: NodeJS.Timeout;
-      if (this.options.timeout) {
+      const connectTimeout =
+        this.options.connectTimeout ?? this.options.timeout;
+      if (connectTimeout) {
         timeoutHandle = setTimeout(() => {
           this.socket?.destroy();
-          reject(new Error("Socket timeout"));
-        }, this.options.timeout);
+          reject(
+            new Error(
+              `Rcon connect to ${this.options.host}:${this.options.port} timed out after ${connectTimeout}ms`,
+            ),
+          );
+        }, connectTimeout);
       }
 
       this.socket.once("error", (e) => reject(e));
       this.socket.once("connect", () => {
         clearTimeout(timeoutHandle);
         this.connected = true;
-        this.sendRaw(this.options.password, PacketType.SERVERDATA_AUTH);
+        this.sendRaw(this.options.password, PacketType.SERVERDATA_AUTH).catch(
+          (e) => reject(e),
+        );
         this.socket?.once("data", (data) => {
           const responseId = data.readInt32LE(4);
           if (responseId === -1) {
@@ -74,7 +83,11 @@ export class Rcon {
       if (this.options.timeout) {
         timeoutHandle = setTimeout(() => {
           this.socket?.destroy();
-          reject(new Error("Socket timeout"));
+          reject(
+            new Error(
+              `Rcon command "${data}" to ${this.options.host}:${this.options.port} timed out after ${this.options.timeout}ms`,
+            ),
+          );
         }, this.options.timeout);
       }
 

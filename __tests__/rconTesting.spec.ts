@@ -1,10 +1,11 @@
-import { Rcon } from "../lib";
+import { Rcon, RconOptions } from "../lib";
 
-const getRconClient = (password?: string) => {
+const getRconClient = (options?: Partial<RconOptions>) => {
   return new Rcon({
     host: process.env.RCON_HOST || "localhost",
     port: process.env.RCON_PORT ? parseInt(process.env.RCON_PORT) : 25575,
-    password: password || process.env.RCON_PASSWORD || "testing",
+    password: process.env.RCON_PASSWORD || "testing",
+    ...options,
   });
 };
 
@@ -39,6 +40,22 @@ test("Test big response", async () => {
 });
 
 test("Test auth fail", async () => {
-  const client = getRconClient("benan");
+  const client = getRconClient({ password: "benan" });
   expect(client.connect()).rejects.toThrow("Authentication error");
+});
+
+test("Test connect timeout", async () => {
+  const client = getRconClient({ timeout: 1 });
+  await expect(client.connect()).rejects.toThrow(
+    /Rcon connect to .+:\d+ timed out after 1ms/,
+  );
+  client.disconnect();
+});
+
+test("Test auth timeout", async () => {
+  const client = getRconClient({ connectTimeout: 5000, timeout: 1 });
+  await expect(client.connect()).rejects.toThrow(
+    /Rcon command ".+" to .+:\d+ timed out after 1ms/,
+  );
+  client.disconnect();
 });
