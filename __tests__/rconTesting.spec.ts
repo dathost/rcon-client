@@ -1,3 +1,5 @@
+import * as assert from "node:assert";
+import { it } from "node:test";
 import { Rcon, RconOptions } from "../lib";
 
 const getRconClient = (options?: Partial<RconOptions>) => {
@@ -9,7 +11,7 @@ const getRconClient = (options?: Partial<RconOptions>) => {
   });
 };
 
-test("Test connection", async () => {
+it("Test connection", async () => {
   const client = getRconClient();
   try {
     await client.connect();
@@ -23,38 +25,41 @@ test("Test connection", async () => {
   client.disconnect();
 });
 
-test("Test data fetching", async () => {
+it("Test data fetching", async () => {
   const client = getRconClient();
   await client.connect();
   const res = await client.send("this command doesn t exist");
-  expect(res.startsWith("Unknown command")).toBeTruthy();
+  assert(res.startsWith("Unknown command"));
   client.disconnect();
 });
 
-test("Test big response", async () => {
+it("Test big response", async () => {
   const client = getRconClient();
   await client.connect();
   const res = await client.send("cvarlist");
-  expect(res.endsWith("total convars/concommands\n")).toBeTruthy();
+  assert(res.endsWith("total convars/concommands\n"));
   client.disconnect();
 });
 
-test("Test auth fail", async () => {
+it("Test auth fail", async () => {
   const client = getRconClient({ password: "benan" });
-  expect(client.connect()).rejects.toThrow("Authentication error");
+  await assert.rejects(client.connect(), "Authentication error");
+  client.disconnect();
 });
 
-test("Test connect timeout", async () => {
+it("Test connect timeout", async () => {
   const client = getRconClient({ timeout: 1 });
-  await expect(client.connect()).rejects.toThrow(
+  await assert.rejects(
+    client.connect(),
     /Rcon connect to .+:\d+ timed out after 1ms/,
   );
   client.disconnect();
 });
 
-test("Test auth timeout", async () => {
+it("Test auth timeout", async () => {
   const client = getRconClient({ connectTimeout: 5000, timeout: 1 });
-  await expect(client.connect()).rejects.toThrow(
+  await assert.rejects(
+    client.connect(),
     /Rcon command ".+" to .+:\d+ timed out after 1ms/,
   );
   client.disconnect();
