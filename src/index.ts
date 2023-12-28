@@ -75,6 +75,9 @@ export class Rcon {
           }
         });
       });
+    }).catch((err) => {
+      Error.captureStackTrace(err);
+      throw err;
     });
   }
   sendRaw(data: string, packetType: PacketType) {
@@ -117,6 +120,9 @@ export class Rcon {
         }
       };
       this.socket.on("data", handleData);
+    }).catch((err) => {
+      Error.captureStackTrace(err);
+      throw err;
     });
   }
   send(cmd: string) {

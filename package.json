@@ -9,7 +9,7 @@
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "scripts": {
-    "test": "tsc && tsc -m esnext --moduleResolution node --allowSyntheticDefaultImports __tests__/rconTesting.spec.ts && node ./__tests__/rconTesting.spec.js",
+    "test": "tsc && tsc --target es2022 -m esnext --moduleResolution node --allowSyntheticDefaultImports __tests__/rconTesting.spec.ts && node ./__tests__/rconTesting.spec.js",
     "build": "tsc",
     "prepare": "npm run build"
   },

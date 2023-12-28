@@ -64,3 +64,48 @@ it("Test auth timeout", async () => {
   );
   client.disconnect();
 });
+
+// https://github.com/brianc/node-postgres/pull/2983/files
+it("Test connect async stacktrace", async function outerFunction() {
+  const client = getRconClient({ timeout: 1 });
+  async function innerFunction() {
+    await client.connect();
+  }
+  try {
+    await innerFunction();
+    throw Error("should have errored");
+  } catch (e: any) {
+    console.log(e);
+    const stack = e.stack;
+    if (
+      !e.stack.includes("innerFunction") ||
+      !e.stack.includes("outerFunction")
+    ) {
+      throw Error("async stack trace does not contain wanted values: " + stack);
+    }
+  }
+  client.disconnect();
+});
+
+it("Test sendRaw async stacktrace", async function outerFunction() {
+  const client = getRconClient();
+  await client.connect();
+  async function innerFunction() {
+    client.options.timeout = 1;
+    await client.send("status");
+  }
+  try {
+    await innerFunction();
+    throw Error("should have errored");
+  } catch (e: any) {
+    console.log(e);
+    const stack = e.stack;
+    if (
+      !e.stack.includes("innerFunction") ||
+      !e.stack.includes("outerFunction")
+    ) {
+      throw Error("async stack trace does not contain wanted values: " + stack);
+    }
+  }
+  client.disconnect();
+});
