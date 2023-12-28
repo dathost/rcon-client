@@ -52,6 +52,11 @@ export class Rcon {
         }, connectTimeout);
       }
 
+      this.socket.once("end", () =>
+        reject(
+          `Rcon connection to ${this.options.host}:${this.options.port} unexpectedly ended`,
+        ),
+      );
       this.socket.once("error", (e) => reject(e));
       this.socket.once("connect", () => {
         clearTimeout(timeoutHandle);
