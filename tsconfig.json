@@ -1,9 +1,10 @@
 {
   "compilerOptions": {
-    "target": "ES5",
+    "target": "ES2022",
     "declaration": true,
     "outDir": "lib",
-    "strict": true
+    "strict": true,
+    "moduleResolution": "node"
   },
   "include": ["src"]
 }

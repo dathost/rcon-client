@@ -1,6 +1,6 @@
-import * as assert from "node:assert";
+import assert from "node:assert";
 import { it } from "node:test";
-import { Rcon, RconOptions } from "../lib";
+import { Rcon, RconOptions } from "../lib/index.js";
 
 const getRconClient = (options?: Partial<RconOptions>) => {
   return new Rcon({
