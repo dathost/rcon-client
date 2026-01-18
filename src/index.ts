@@ -21,6 +21,8 @@ enum PacketType {
   SERVERDATA_AUTH = 3,
 }
 
+const DEFAULT_TIMEOUT = 5000;
+
 export class Rcon {
   options: RconOptions;
   socket?: Socket;
@@ -37,10 +39,11 @@ export class Rcon {
         host: this.options.host,
         port: this.options.port,
       });
+      this.socket.unref();
 
-      let timeoutHandle: NodeJS.Timeout;
+      let timeoutHandle: NodeJS.Timeout | undefined;
       const connectTimeout =
-        this.options.connectTimeout ?? this.options.timeout;
+        this.options.connectTimeout ?? this.options.timeout ?? DEFAULT_TIMEOUT;
       if (connectTimeout) {
         timeoutHandle = setTimeout(() => {
           this.socket?.destroy();
@@ -87,16 +90,17 @@ export class Rcon {
         return;
       }
 
-      let timeoutHandle: NodeJS.Timeout;
-      if (this.options.timeout) {
+      let timeoutHandle: NodeJS.Timeout | undefined;
+      const timeout = this.options.timeout ?? DEFAULT_TIMEOUT;
+      if (timeout) {
         timeoutHandle = setTimeout(() => {
           this.socket?.destroy();
           reject(
             new Error(
-              `Rcon command "${data}" to ${this.options.host}:${this.options.port} timed out after ${this.options.timeout}ms`,
+              `Rcon command "${data}" to ${this.options.host}:${this.options.port} timed out after ${timeout}ms`,
             ),
           );
-        }, this.options.timeout);
+        }, timeout);
       }
 
       const requestId = randomInt(2147483647);
